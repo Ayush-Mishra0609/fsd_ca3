@@ -6,6 +6,7 @@
 - **Semester**: V
 - **Subject**: Full Stack Development / Web Development
 - **Total Assigned Programs**: 5 (Covering all six Course Outcomes: CO1 &ndash; CO6)
+- **📸 Execution Screenshots & Output Document**: [FSD_Practical_Assignment_Outputs_Roll38.pdf](FSD_Practical_Assignment_Outputs_Roll38.pdf)
 
 ---
 
