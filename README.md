@@ -1,11 +1,15 @@
 # FULL STACK DEVELOPMENT &mdash; PROGRAMMING EXERCISE
 ## Individual Practical Assignment | B.E. (AI & DS) | Semester V
 
+- **Student Name**: Ayush Kumar Mishra
 - **Student Roll No**: 38
+- **Class**: D11ADA
 - **Department**: Artificial Intelligence & Data Science
 - **Semester**: V
 - **Subject**: Full Stack Development / Web Development
 - **Total Assigned Programs**: 5 (Covering all six Course Outcomes: CO1 &ndash; CO6)
+- **📘 CAI Practical Journal (PDF)**: [FSD_CA3_Practical_Journal_Ayush_Mishra_Roll38.pdf](FSD_CA3_Practical_Journal_Ayush_Mishra_Roll38.pdf)
+- **📝 CAI Practical Journal (Markdown)**: [FSD_CA3_Practical_Journal_Ayush_Mishra_Roll38.md](FSD_CA3_Practical_Journal_Ayush_Mishra_Roll38.md)
 - **📸 Execution Screenshots & Output Document**: [FSD_Practical_Assignment_Outputs_Roll38.pdf](FSD_Practical_Assignment_Outputs_Roll38.pdf)
 
 ---
