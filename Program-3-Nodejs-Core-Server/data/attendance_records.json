@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "rollNo": "38",
+    "name": "Ayush Sharma",
+    "course": "B.E. AI & DS",
+    "semester": "V",
+    "date": "2026-11-14",
+    "status": "Present",
+    "remarks": "Lab session completed"
+  },
+  {
+    "id": 2,
+    "rollNo": "01",
+    "name": "Aarav Patel",
+    "course": "B.E. AI & DS",
+    "semester": "V",
+    "date": "2026-11-14",
+    "status": "Present",
+    "remarks": "On-time arrival"
+  },
+  {
+    "id": 3,
+    "rollNo": "12",
+    "name": "Bhavya Rao",
+    "course": "B.E. AI & DS",
+    "semester": "V",
+    "date": "2026-11-14",
+    "status": "Absent",
+    "remarks": "Medical leave reported"
+  },
+  {
+    "id": 4,
+    "rollNo": "24",
+    "name": "Devansh Mehta",
+    "course": "B.E. AI & DS",
+    "semester": "V",
+    "date": "2026-11-14",
+    "status": "Late",
+    "remarks": "Delayed by 15 mins"
+  }
+]

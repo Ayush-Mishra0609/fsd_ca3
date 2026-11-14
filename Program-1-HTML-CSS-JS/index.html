@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Attendance Management System | CO1 & CO2</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="header-title">
+          <span class="badge-dept">B.E. (AI & DS) | Semester V</span>
+          <h1>Student Attendance Management System</h1>
+          <p class="subtitle">Practical Program 1 &mdash; Browser-based Interface with DOM Manipulation & Fetch API (CO1, CO2)</p>
+        </div>
+        <div class="student-info-chip">
+          <div class="chip-avatar">38</div>
+          <div class="chip-details">
+            <span class="chip-name">Roll No: 38</span>
+            <span class="chip-sub">Full Stack Web Dev</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <!-- Main Content Layout -->
+    <main class="dashboard-grid">
+      <!-- Left Column: Form & Analytics -->
+      <section class="panel-left">
+        <!-- Add Attendance Card Form -->
+        <div class="card form-card">
+          <div class="card-header">
+            <h2>
+              <span class="icon">📝</span>
+              <span id="formTitle">Mark Student Attendance</span>
+            </h2>
+            <button id="resetFormBtn" type="button" class="btn-text" title="Clear form">Clear</button>
+          </div>
+
+          <form id="attendanceForm" novalidate>
+            <input type="hidden" id="editRecordId" value="">
+
+            <div class="form-group">
+              <label for="rollNo">Student Roll No. <span class="required">*</span></label>
+              <input 
+                type="text" 
+                id="rollNo" 
+                name="rollNo" 
+                placeholder="e.g. 38 or AD-38" 
+                autocomplete="off" 
+                required
+              >
+              <span class="error-msg" id="rollNoError"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="studentName">Student Full Name <span class="required">*</span></label>
+              <input 
+                type="text" 
+                id="studentName" 
+                name="studentName" 
+                placeholder="e.g. Ayush Sharma" 
+                autocomplete="off" 
+                required
+              >
+              <span class="error-msg" id="studentNameError"></span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-half">
+                <label for="course">Course / Department <span class="required">*</span></label>
+                <select id="course" name="course" required>
+                  <option value="B.E. AI & DS" selected>B.E. AI & DS</option>
+                  <option value="B.E. Computer Engg">B.E. Computer Engg</option>
+                  <option value="B.E. IT">B.E. IT</option>
+                  <option value="B.E. Data Science">B.E. Data Science</option>
+                </select>
+                <span class="error-msg" id="courseError"></span>
+              </div>
+
+              <div class="form-group col-half">
+                <label for="attendanceDate">Attendance Date <span class="required">*</span></label>
+                <input 
+                  type="date" 
+                  id="attendanceDate" 
+                  name="attendanceDate" 
+                  required
+                >
+                <span class="error-msg" id="dateError"></span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Attendance Status <span class="required">*</span></label>
+              <div class="radio-status-group" role="radiogroup" aria-labelledby="statusLabel">
+                <label class="radio-card status-present">
+                  <input type="radio" name="status" value="Present" checked>
+                  <span class="radio-indicator"></span>
+                  <span class="radio-label">Present</span>
+                </label>
+                <label class="radio-card status-late">
+                  <input type="radio" name="status" value="Late">
+                  <span class="radio-indicator"></span>
+                  <span class="radio-label">Late</span>
+                </label>
+                <label class="radio-card status-absent">
+                  <input type="radio" name="status" value="Absent">
+                  <span class="radio-indicator"></span>
+                  <span class="radio-label">Absent</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="remarks">Remarks / Session Notes</label>
+              <input 
+                type="text" 
+                id="remarks" 
+                name="remarks" 
+                placeholder="Optional notes e.g., On time / Medical leave"
+              >
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="submitBtn" class="btn btn-primary">
+                <span class="btn-icon">💾</span>
+                <span id="submitBtnText">Record Attendance</span>
+              </button>
+              <button type="button" id="cancelEditBtn" class="btn btn-secondary hidden">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Simulated HTTP Activity Logger -->
+        <div class="card http-log-card">
+          <div class="card-header">
+            <h3><span class="icon">🌐</span> HTTP Fetch Activity Monitor</h3>
+            <button id="clearLogsBtn" class="btn-xs">Clear</button>
+          </div>
+          <p class="http-subtext">Demonstrates simulated asynchronous HTTP methods (GET, POST, PUT, DELETE) and JSON payloads.</p>
+          <div id="httpLogger" class="http-log-list">
+            <div class="log-entry log-info">Ready to monitor HTTP Fetch API requests...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Stats & Records Table -->
+      <section class="panel-right">
+        <!-- Stat KPI Counters -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-icon">👥</span>
+            <div class="stat-meta">
+              <span class="stat-label">Total Records</span>
+              <span id="statTotal" class="stat-number">0</span>
+            </div>
+          </div>
+          <div class="stat-card present-border">
+            <span class="stat-icon stat-green">✅</span>
+            <div class="stat-meta">
+              <span class="stat-label">Present</span>
+              <span id="statPresent" class="stat-number">0</span>
+            </div>
+          </div>
+          <div class="stat-card late-border">
+            <span class="stat-icon stat-amber">⏱️</span>
+            <div class="stat-meta">
+              <span class="stat-label">Late</span>
+              <span id="statLate" class="stat-number">0</span>
+            </div>
+          </div>
+          <div class="stat-card absent-border">
+            <span class="stat-icon stat-red">❌</span>
+            <div class="stat-meta">
+              <span class="stat-label">Absent</span>
+              <span id="statAbsent" class="stat-number">0</span>
+            </div>
+          </div>
+          <div class="stat-card rate-border">
+            <span class="stat-icon stat-blue">📊</span>
+            <div class="stat-meta">
+              <span class="stat-label">Attendance Rate</span>
+              <span id="statRate" class="stat-number">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Records Table Card -->
+        <div class="card table-card">
+          <div class="toolbar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search by student name, roll number, or remarks..."
+              >
+            </div>
+
+            <div class="toolbar-controls">
+              <!-- Filter Dropdown -->
+              <div class="control-group">
+                <label for="filterStatus">Status:</label>
+                <select id="filterStatus">
+                  <option value="ALL">All Statuses</option>
+                  <option value="Present">Present Only</option>
+                  <option value="Late">Late Only</option>
+                  <option value="Absent">Absent Only</option>
+                </select>
+              </div>
+
+              <!-- Sort Dropdown -->
+              <div class="control-group">
+                <label for="sortBy">Sort By:</label>
+                <select id="sortBy">
+                  <option value="rollNo-asc">Roll No (Ascending)</option>
+                  <option value="rollNo-desc">Roll No (Descending)</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="date-desc">Date (Newest)</option>
+                  <option value="status">Status</option>
+                </select>
+              </div>
+
+              <button id="reloadSampleBtn" class="btn btn-outline" title="Reload sample data via Fetch API">
+                <span>🔄 Reload API Data</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Attendance Records Table -->
+          <div class="table-responsive">
+            <table class="attendance-table" id="attendanceTable">
+              <thead>
+                <tr>
+                  <th>Roll No</th>
+                  <th>Student Name</th>
+                  <th>Course</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                  <th class="actions-header">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTableBody">
+                <!-- Dynamically injected via app.js -->
+              </tbody>
+            </table>
+
+            <!-- Empty State View -->
+            <div id="emptyState" class="empty-state hidden">
+              <span class="empty-icon">📂</span>
+              <p class="empty-title">No attendance records found</p>
+              <p class="empty-desc">Try clearing your search query or load sample records using the button above.</p>
+            </div>
+
+            <!-- Loading Spinner View -->
+            <div id="tableLoader" class="table-loader hidden">
+              <div class="spinner"></div>
+              <span>Fetching attendance data via Fetch API...</span>
+            </div>
+          </div>
+
+          <div class="table-footer">
+            <span id="recordsCounter" class="records-count">Showing 0 of 0 records</span>
+            <button id="exportCsvBtn" class="btn-text">📥 Export to CSV</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Full Stack Development Practical Assignment | Student Roll No: <strong>38</strong> | Department of AI & DS | Course Outcomes: CO1 (HTML/CSS/JS Form & DOM) & CO2 (Asynchronous Fetch & Event Handling)</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
