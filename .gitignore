@@ -20,9 +20,10 @@ yarn-error.log*
 pnpm-debug.log*
 logs/
 
-# SQLite databases (generated at runtime)
+# SQLite databases and runtime generated data
 *.sqlite
 *.sqlite3
+Program-4-Express-REST-API/src/data/records.json
 
 # Editor / System files
 .DS_Store
