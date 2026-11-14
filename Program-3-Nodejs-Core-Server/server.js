@@ -380,18 +380,33 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// Initialize storage and launch server
-initStorage().then(() => {
-  server.listen(PORT, () => {
-    console.log(`=======================================================`);
-    console.log(`🚀 Node.js Core Server running at: http://localhost:${PORT}`);
-    console.log(`👤 Student Roll No: 38 | Dept: AI & DS | CO4`);
-    console.log(`📦 Storage File: ${DATA_FILE_PATH}`);
-    console.log(`📜 Event Stream Log: ${LOGS_FILE_PATH}`);
-    console.log(`=======================================================`);
+// Initialize storage and start server
+async function startServer(port = PORT) {
+  await initStorage();
+  return new Promise((resolve, reject) => {
+    const s = server.listen(port, () => {
+      const activePort = s.address().port;
+      console.log(`=======================================================`);
+      console.log(`🚀 Node.js Core Server running at: http://localhost:${activePort}`);
+      console.log(`👤 Student Roll No: 38 | Dept: AI & DS | CO4`);
+      console.log(`📦 Storage File: ${DATA_FILE_PATH}`);
+      console.log(`📜 Event Stream Log: ${LOGS_FILE_PATH}`);
+      console.log(`=======================================================`);
+      resolve(s);
+    });
+    s.on('error', reject);
   });
-}).catch(err => {
-  console.error('Failed to initialize server storage:', err);
-});
+}
 
-module.exports = server;
+// Automatically start if executed directly (e.g. node server.js)
+if (require.main === module) {
+  startServer().catch(err => {
+    console.error('Failed to initialize server storage:', err);
+  });
+}
+
+module.exports = {
+  server,
+  startServer,
+  initStorage
+};

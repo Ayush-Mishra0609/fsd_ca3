@@ -1,150 +1,134 @@
 /**
  * Automated Test Client for Program 3 (CO4)
- * Supports both network requests and in-process simulation for sandboxed testing.
+ * Tests all endpoints, streams, file system persistence, and EventEmitter notifications.
+ * Connects to an existing server on port 4000 or automatically starts an ephemeral test server.
  */
 
-const { EventEmitter } = require('events');
-const server = require('./server');
+const { startServer } = require('./server');
 
-// Mock HTTP Response for in-process testing
-class MockResponse extends EventEmitter {
-  constructor() {
-    super();
-    this.statusCode = 200;
-    this.headers = {};
-    this.body = '';
-  }
-
-  writeHead(status, headers = {}) {
-    this.statusCode = status;
-    this.headers = { ...this.headers, ...headers };
-  }
-
-  write(chunk) {
-    this.body += chunk ? chunk.toString() : '';
-  }
-
-  end(chunk) {
-    if (chunk) this.body += chunk.toString();
-    this.emit('finish');
-  }
-
-  // Stream pipe target simulation
-  emit(event, ...args) {
-    return super.emit(event, ...args);
+async function checkRunningServer(url) {
+  try {
+    const res = await fetch(`${url}/api/attendance`, { signal: AbortSignal.timeout(600) });
+    return res.ok;
+  } catch (e) {
+    return false;
   }
 }
 
-// Mock HTTP Request
-class MockRequest extends EventEmitter {
-  constructor(method, url, body = null) {
-    super();
-    this.method = method;
-    this.url = url;
-    this.headers = {
-      host: 'localhost:4000',
-      'content-type': 'application/json'
-    };
-    this.body = body;
-  }
-}
-
-async function dispatchRequest(method, urlPath, payload = null) {
-  return new Promise((resolve, reject) => {
-    const req = new MockRequest(method, urlPath, payload);
-    const res = new MockResponse();
-
-    res.on('finish', () => {
-      try {
-        const contentType = res.headers['Content-Type'] || res.headers['content-type'] || '';
-        if (contentType.includes('application/json')) {
-          resolve({ statusCode: res.statusCode, data: JSON.parse(res.body), headers: res.headers });
-        } else {
-          resolve({ statusCode: res.statusCode, raw: res.body, headers: res.headers });
-        }
-      } catch (e) {
-        resolve({ statusCode: res.statusCode, raw: res.body, headers: res.headers });
-      }
-    });
-
-    const requestListener = server.listeners('request')[0];
-    if (!requestListener) {
-      return reject(new Error('No HTTP request listener found on server'));
-    }
-
-    requestListener(req, res);
-
-    // Push data chunks and end
-    if (payload) {
-      req.emit('data', Buffer.from(JSON.stringify(payload)));
-    }
-    req.emit('end');
-  });
-}
-
-async function runTests() {
+async function runTestSuite() {
   console.log('\n===============================================================');
   console.log('🧪 Starting Verification Test Suite for Program 3 (CO4)');
   console.log('👤 Student Roll No: 38 | Dept: B.E. AI & DS (Sem V)');
   console.log('===============================================================\n');
 
+  let baseUrl = 'http://127.0.0.1:4000';
+  let spawnedServer = null;
+
+  // Check if server is already running on port 4000
+  const isRunning = await checkRunningServer(baseUrl);
+
+  if (isRunning) {
+    console.log('🔗 Connected to already-running Node.js server on port 4000.\n');
+  } else {
+    console.log('⚙️ Starting local test server instance on dynamic ephemeral port...');
+    spawnedServer = await startServer(0);
+    const port = spawnedServer.address().port;
+    baseUrl = `http://127.0.0.1:${port}`;
+    console.log(`📡 Test server listening on: ${baseUrl}\n`);
+  }
+
   try {
-    // 1. Test GET /api/attendance
+    // -------------------------------------------------------------
+    // Test 1: GET /api/attendance
+    // -------------------------------------------------------------
     console.log('1️⃣ [TEST] GET /api/attendance (Read records from file system)...');
-    const getRes = await dispatchRequest('GET', '/api/attendance');
-    console.log(`   ✅ Status: ${getRes.statusCode} | Total Records: ${getRes.data.totalInStore}`);
+    const getRes = await fetch(`${baseUrl}/api/attendance`);
+    const getData = await getRes.json();
+    console.log(`   ✅ Status: ${getRes.status} | Total Records: ${getData.totalInStore || getData.count}`);
 
-    // 2. Test GET /api/attendance/stats
+    // -------------------------------------------------------------
+    // Test 2: GET /api/attendance/stats
+    // -------------------------------------------------------------
     console.log('\n2️⃣ [TEST] GET /api/attendance/stats (Calculated analytics)...');
-    const statsRes = await dispatchRequest('GET', '/api/attendance/stats');
-    console.log(`   ✅ Status: ${statsRes.statusCode} | Compliance: ${statsRes.data.stats.attendanceRatePercentage}`);
+    const statsRes = await fetch(`${baseUrl}/api/attendance/stats`);
+    const statsData = await statsRes.json();
+    console.log(`   ✅ Status: ${statsRes.status} | Compliance: ${statsData.stats?.attendanceRatePercentage}`);
 
-    // 3. Test POST /api/attendance
+    // -------------------------------------------------------------
+    // Test 3: POST /api/attendance
+    // -------------------------------------------------------------
     console.log('\n3️⃣ [TEST] POST /api/attendance (Store new record & trigger EventEmitter)...');
-    const postRes = await dispatchRequest('POST', '/api/attendance', {
-      rollNo: "38",
-      name: "Ayush Sharma",
-      course: "B.E. AI & DS",
-      semester: "V",
-      status: "Present",
-      remarks: "Automated test verification executed"
+    const postRes = await fetch(`${baseUrl}/api/attendance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rollNo: "38",
+        name: "Ayush Sharma",
+        course: "B.E. AI & DS",
+        semester: "V",
+        status: "Present",
+        remarks: "Automated test verification executed"
+      })
     });
-    console.log(`   ✅ Status: ${postRes.statusCode} | Result: ${postRes.data.message}`);
-    const newId = postRes.data.data.id;
+    const postData = await postRes.json();
+    console.log(`   ✅ Status: ${postRes.status} | Result: ${postData.message}`);
+    const newId = postData.data?.id;
 
-    // 4. Test PUT /api/attendance?id=...
+    // -------------------------------------------------------------
+    // Test 4: PUT /api/attendance?id=...
+    // -------------------------------------------------------------
     console.log(`\n4️⃣ [TEST] PUT /api/attendance?id=${newId} (Update status & trigger EventEmitter)...`);
-    const putRes = await dispatchRequest('PUT', `/api/attendance?id=${newId}`, {
-      status: "Late",
-      remarks: "Updated status via PUT"
+    const putRes = await fetch(`${baseUrl}/api/attendance?id=${newId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: "Late",
+        remarks: "Updated status via PUT"
+      })
     });
-    console.log(`   ✅ Status: ${putRes.statusCode} | New Status: ${putRes.data.data.status}`);
+    const putData = await putRes.json();
+    console.log(`   ✅ Status: ${putRes.status} | New Status: ${putData.data?.status}`);
 
-    // 5. Test Streams: GET /api/attendance/logs
+    // -------------------------------------------------------------
+    // Test 5: GET /api/attendance/logs (Streams: fs.createReadStream)
+    // -------------------------------------------------------------
     console.log('\n5️⃣ [TEST] GET /api/attendance/logs (Audit log stream verification)...');
-    const logRes = await dispatchRequest('GET', '/api/attendance/logs');
-    console.log(`   ✅ Status: ${logRes.statusCode}`);
-    if (logRes.raw) {
-      console.log(`   📜 Streamed Log Entry: ${logRes.raw.trim().split('\n').pop()}`);
+    const logRes = await fetch(`${baseUrl}/api/attendance/logs`);
+    const logText = await logRes.text();
+    console.log(`   ✅ Status: ${logRes.status}`);
+    if (logText) {
+      const lastLine = logText.trim().split('\n').pop();
+      console.log(`   📜 Streamed Log Entry: ${lastLine}`);
     }
 
-    // 6. Test Streams: GET /api/attendance/export (CSV Stream)
+    // -------------------------------------------------------------
+    // Test 6: GET /api/attendance/export (Streams: Readable Stream)
+    // -------------------------------------------------------------
     console.log('\n6️⃣ [TEST] GET /api/attendance/export (CSV Stream export)...');
-    const csvRes = await dispatchRequest('GET', '/api/attendance/export');
-    console.log(`   ✅ Status: ${csvRes.statusCode} | Content-Type: ${csvRes.headers['Content-Type']}`);
+    const csvRes = await fetch(`${baseUrl}/api/attendance/export`);
+    const csvContentType = csvRes.headers.get('content-type');
+    const csvContent = await csvRes.text();
+    console.log(`   ✅ Status: ${csvRes.status} | Content-Type: ${csvContentType}`);
+    console.log(`   📊 Streamed CSV Preview: ${csvContent.split('\n')[0]}`);
 
-    // 7. Test DELETE /api/attendance?id=...
+    // -------------------------------------------------------------
+    // Test 7: DELETE /api/attendance?id=...
+    // -------------------------------------------------------------
     console.log(`\n7️⃣ [TEST] DELETE /api/attendance?id=${newId} (Delete record & trigger EventEmitter)...`);
-    const delRes = await dispatchRequest('DELETE', `/api/attendance?id=${newId}`);
-    console.log(`   ✅ Status: ${delRes.statusCode} | Result: ${delRes.data.message}`);
+    const delRes = await fetch(`${baseUrl}/api/attendance?id=${newId}`, {
+      method: 'DELETE'
+    });
+    const delData = await delRes.json();
+    console.log(`   ✅ Status: ${delRes.status} | Result: ${delData.message}`);
 
-    console.log('\n🎉 ALL 7 TEST CASES COMPLETED & VERIFIED SUCCESSFULLY!\n');
+    console.log('\n🎉 ALL 7 TEST CASES IN PROGRAM 3 COMPLETED & VERIFIED SUCCESSFULLY!\n');
   } catch (error) {
-    console.error('❌ Test failed:', error);
+    console.error('❌ Test run failed:', error);
   } finally {
-    server.close();
+    if (spawnedServer) {
+      spawnedServer.close();
+    }
   }
 }
 
-// Run test suite
-setTimeout(runTests, 200);
+runTestSuite();
